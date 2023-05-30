@@ -13,22 +13,21 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
-import java.util.logging.Level;
 
 public class CloudACM2 extends JavaPlugin {
     private ConfigManager configManager;
-    private GamePart game;
     private List<World> managedWorlds;
     private int gameTimer;
+    private List<UUID> bypassingPlayers;
+    private GamePart game;
 
     @Override
     public void onEnable() {
-
         this.configManager = new ConfigManager(DefaultConfigValues.getConfig(), false, this.getDataFolder(), "config.json");
         this.configManager.reloadConfig();
-
         this.managedWorlds = new ArrayList<>();
         this.gameTimer = 0;
+        this.bypassingPlayers = new ArrayList<>();
         this.game = null;
 
         // this.dataPack = this.getServer().getDataPackManager().getDataPack(); this.configManager.getConfig().optString("datapackName", "data_pack");
@@ -85,6 +84,18 @@ public class CloudACM2 extends JavaPlugin {
 
         }, 0, 10);
 
+    }
+
+    public void onDisable() {
+        this.getLogger().info("Disabling plugin CloudACM");
+
+        this.stopGame();
+
+        for (World world : this.getManagedWorlds()) {
+            this.unloadWorld(world);
+        }
+
+        this.getLogger().info("CloudACM was successfully disabled");
     }
 
     public void stopGame() {
@@ -149,5 +160,25 @@ public class CloudACM2 extends JavaPlugin {
 
         return world;
 
+    }
+
+    public List<UUID> getBypassingPlayers() {
+        return List.copyOf(this.bypassingPlayers);
+    }
+
+    public boolean isPlayerBypassing(UUID playerId) {
+        return this.bypassingPlayers.contains(playerId);
+    }
+
+    public void addBypassingPlayer(UUID playerId) {
+        this.bypassingPlayers.add(playerId);
+    }
+
+    public void removeBypassingPlayer(UUID playerId) {
+        this.bypassingPlayers.remove(playerId);
+    }
+
+    public void clearBypassingPlayers() {
+        this.bypassingPlayers.clear();
     }
 }
