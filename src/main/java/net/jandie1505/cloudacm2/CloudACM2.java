@@ -1,10 +1,12 @@
-package net.jandie1505;
+package net.jandie1505.cloudacm2;
 
-import net.jandie1505.config.DefaultConfigValues;
+import net.jandie1505.cloudacm2.commands.ACM2Command;
+import net.jandie1505.cloudacm2.config.DefaultConfigValues;
 import net.jandie1505.configmanager.ConfigManager;
-import net.jandie1505.game.Game;
-import net.jandie1505.lobby.Lobby;
+import net.jandie1505.cloudacm2.game.Game;
+import net.jandie1505.cloudacm2.lobby.Lobby;
 import org.bukkit.Location;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.World;
 import org.bukkit.WorldCreator;
 import org.bukkit.entity.Player;
@@ -32,6 +34,11 @@ public class CloudACM2 extends JavaPlugin {
         this.bypassingPlayers = new ArrayList<>();
         this.game = null;
         this.nextStatus = false;
+
+        this.getCommand("cloudacm2").setExecutor(new ACM2Command(this));
+        this.getCommand("cloudacm2").setTabCompleter(new ACM2Command(this));
+
+        this.getServer().getPluginManager().registerEvents(new EventListener(this), this);
 
         this.getServer().getScheduler().scheduleSyncRepeatingTask(this, () -> {
 
@@ -121,6 +128,10 @@ public class CloudACM2 extends JavaPlugin {
         this.nextStatus = true;
     }
 
+    public GamePart getGame() {
+        return this.game;
+    }
+
     public List<World> getManagedWorlds() {
         return List.copyOf(this.managedWorlds);
     }
@@ -199,5 +210,23 @@ public class CloudACM2 extends JavaPlugin {
 
     public ConfigManager getConfigManager() {
         return this.configManager;
+    }
+
+    public Player getPlayerFromString(String playerString) {
+        try {
+            UUID uuid = UUID.fromString(playerString);
+            return this.getServer().getPlayer(uuid);
+        } catch (IllegalArgumentException e) {
+            return this.getServer().getPlayer(playerString);
+        }
+    }
+
+    public OfflinePlayer getOfflinePlayerFromString(String playerString) {
+        try {
+            UUID uuid = UUID.fromString(playerString);
+            return this.getServer().getOfflinePlayer(uuid);
+        } catch (IllegalArgumentException e) {
+            return this.getServer().getOfflinePlayer(playerString);
+        }
     }
 }

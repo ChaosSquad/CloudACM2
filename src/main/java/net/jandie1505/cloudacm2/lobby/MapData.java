@@ -1,4 +1,4 @@
-package net.jandie1505.lobby;
+package net.jandie1505.cloudacm2.lobby;
 
 import java.util.List;
 

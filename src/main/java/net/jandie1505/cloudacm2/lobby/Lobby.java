@@ -1,8 +1,8 @@
-package net.jandie1505.lobby;
+package net.jandie1505.cloudacm2.lobby;
 
-import net.jandie1505.CloudACM2;
-import net.jandie1505.GamePart;
-import net.jandie1505.game.Game;
+import net.jandie1505.cloudacm2.CloudACM2;
+import net.jandie1505.cloudacm2.GamePart;
+import net.jandie1505.cloudacm2.game.Game;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.GameMode;
@@ -122,6 +122,22 @@ public class Lobby implements GamePart {
                 }
 
             }
+
+        }
+
+        // Add players
+
+        for (Player player : List.copyOf(this.plugin.getServer().getOnlinePlayers())) {
+
+            if (this.plugin.isPlayerBypassing(player.getUniqueId())) {
+                continue;
+            }
+
+            if (this.players.containsKey(player.getUniqueId())) {
+                continue;
+            }
+
+            this.players.put(player.getUniqueId(), new LobbyPlayerData());
 
         }
 
@@ -284,7 +300,8 @@ public class Lobby implements GamePart {
                 this.plugin,
                 world,
                 this.gamemode,
-                this.selectedMap.getId()
+                this.selectedMap.getId(),
+                this.getPlayers()
         );
     }
 

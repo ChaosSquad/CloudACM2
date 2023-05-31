@@ -1,4 +1,4 @@
-package net.jandie1505;
+package net.jandie1505.cloudacm2;
 
 public interface GamePart {
     boolean tick();

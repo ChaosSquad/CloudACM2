@@ -1,0 +1,13 @@
+main: net.jandie1505.cloudacm2.CloudACM2
+name: CloudACM2
+version: 1.0
+api-version: 1.19
+commands:
+  cloudacm2:
+    description: Command
+    usage: /cloudacm2
+permissions:
+  cloudacm2.admin:
+    description: Admin permission
+    default: op
+website: jandie1505.net

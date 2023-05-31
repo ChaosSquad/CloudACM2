@@ -1,4 +1,4 @@
-package net.jandie1505.config;
+package net.jandie1505.cloudacm2.config;
 
 import org.json.JSONObject;
 
