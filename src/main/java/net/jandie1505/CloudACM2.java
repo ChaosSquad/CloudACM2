@@ -32,18 +32,6 @@ public class CloudACM2 extends JavaPlugin {
 
         // this.dataPack = this.getServer().getDataPackManager().getDataPack(); this.configManager.getConfig().optString("datapackName", "data_pack");
 
-        /*
-        this.border = new int[]{
-                this.configManager.getConfig().optJSONObject("border", new JSONObject()).optInt("x1", -286),
-                this.configManager.getConfig().optJSONObject("border", new JSONObject()).optInt("y1", 65),
-                this.configManager.getConfig().optJSONObject("border", new JSONObject()).optInt("z1", -478),
-                this.configManager.getConfig().optJSONObject("border", new JSONObject()).optInt("x2", -280),
-                this.configManager.getConfig().optJSONObject("border", new JSONObject()).optInt("y2", -69),
-                this.configManager.getConfig().optJSONObject("border", new JSONObject()).optInt("z2", -472)
-        };
-
-         */
-
         this.getServer().getScheduler().scheduleSyncRepeatingTask(this, () -> {
 
             try {
@@ -180,5 +168,9 @@ public class CloudACM2 extends JavaPlugin {
 
     public void clearBypassingPlayers() {
         this.bypassingPlayers.clear();
+    }
+
+    public ConfigManager getConfigManager() {
+        return this.configManager;
     }
 }
