@@ -280,7 +280,12 @@ public class Lobby implements GamePart {
 
         world.setAutoSave(false);
 
-        return new Game(this.plugin, world);
+        return new Game(
+                this.plugin,
+                world,
+                this.gamemode,
+                this.selectedMap.getId()
+        );
     }
 
     public Map<UUID, LobbyPlayerData> getPlayers() {
