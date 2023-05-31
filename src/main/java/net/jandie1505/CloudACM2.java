@@ -3,6 +3,7 @@ package net.jandie1505;
 import net.jandie1505.config.DefaultConfigValues;
 import net.jandie1505.configmanager.ConfigManager;
 import net.jandie1505.game.Game;
+import net.jandie1505.lobby.Lobby;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.WorldCreator;
@@ -20,6 +21,7 @@ public class CloudACM2 extends JavaPlugin {
     private int gameTimer;
     private List<UUID> bypassingPlayers;
     private GamePart game;
+    private boolean nextStatus;
 
     @Override
     public void onEnable() {
@@ -29,8 +31,7 @@ public class CloudACM2 extends JavaPlugin {
         this.gameTimer = 0;
         this.bypassingPlayers = new ArrayList<>();
         this.game = null;
-
-        // this.dataPack = this.getServer().getDataPackManager().getDataPack(); this.configManager.getConfig().optString("datapackName", "data_pack");
+        this.nextStatus = false;
 
         this.getServer().getScheduler().scheduleSyncRepeatingTask(this, () -> {
 
@@ -38,9 +39,27 @@ public class CloudACM2 extends JavaPlugin {
 
                 if (this.game != null) {
 
-                    if (!this.game.tick()) {
+                    if (this.game.tick()) {
+
+                        if (this.nextStatus) {
+
+                            this.nextStatus = false;
+                            this.game = this.game.getNextStatus();
+                            this.getLogger().info("Updated game part");
+
+                        }
+
+                    } else {
+
                         this.stopGame();
                         this.getLogger().warning("Game stopped because it was aborted by tick");
+
+                    }
+
+                } else {
+
+                    if (this.nextStatus) {
+                        this.nextStatus = false;
                     }
 
                 }
@@ -88,10 +107,18 @@ public class CloudACM2 extends JavaPlugin {
 
     public void stopGame() {
         this.game = null;
+        this.getLogger().info("Stopped game");
     }
 
     public void startGame() {
+        if (this.game == null) {
+            this.game = new Lobby(this);
+            this.getLogger().info("Started game");
+        }
+    }
 
+    public void nextStatus() {
+        this.nextStatus = true;
     }
 
     public List<World> getManagedWorlds() {

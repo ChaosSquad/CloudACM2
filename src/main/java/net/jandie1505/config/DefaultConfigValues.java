@@ -12,6 +12,7 @@ public class DefaultConfigValues {
         config.put("lobbyTime", 90);
         config.put("world", "acm2");
         config.put("gamemode", 0);
+        config.put("mapVoting", false);
 
         // border
 

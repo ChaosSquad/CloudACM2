@@ -1,19 +1,19 @@
 package net.jandie1505.lobby;
 
 public class LobbyPlayerData {
-    private int vote;
+    private MapData vote;
     private int team;
 
     public LobbyPlayerData() {
-        this.vote = 0;
+        this.vote = null;
         this.team = 0;
     }
 
-    public int getVote() {
+    public MapData getVote() {
         return vote;
     }
 
-    public void setVote(int vote) {
+    public void setVote(MapData vote) {
         this.vote = vote;
     }
 

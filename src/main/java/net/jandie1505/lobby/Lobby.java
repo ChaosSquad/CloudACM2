@@ -2,16 +2,16 @@ package net.jandie1505.lobby;
 
 import net.jandie1505.CloudACM2;
 import net.jandie1505.GamePart;
+import net.jandie1505.game.Game;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
+import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.json.JSONObject;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 public class Lobby implements GamePart {
     private final CloudACM2 plugin;
@@ -21,8 +21,9 @@ public class Lobby implements GamePart {
     private final boolean enableBorder;
     private final int[] border;
     private final Location lobbySpawn;
-    private final int gamemode;
-    private final int mapPart;
+    private boolean mapVoting;
+    private int gamemode;
+    private MapData selectedMap;
 
     public Lobby(CloudACM2 plugin) {
         this.plugin = plugin;
@@ -46,11 +47,19 @@ public class Lobby implements GamePart {
                 this.plugin.getConfigManager().getConfig().optJSONObject("spawn", new JSONObject()).optFloat("pitch")
         );
         this.gamemode = this.plugin.getConfigManager().getConfig().optInt("gamemode", 0);
-        this.mapPart = 0;
+        this.selectedMap = null;
+        this.mapVoting = this.plugin.getConfigManager().getConfig().optBoolean("mapVoting", false);
     }
 
     @Override
     public boolean tick() {
+
+        // SELECT MAP
+
+        if (this.selectedMap == null && this.time <= 10) {
+            this.autoSelectMap();
+            this.displayMap();
+        }
 
         // PLAYER MANAGEMENT
 
@@ -121,7 +130,7 @@ public class Lobby implements GamePart {
         if (this.timeStep >= 1) {
 
             if (this.time < 0) {
-                this.nextStatus();
+                this.plugin.nextStatus();
             } else {
                 this.time--;
             }
@@ -139,13 +148,150 @@ public class Lobby implements GamePart {
         return true;
     }
 
-    private void nextStatus() {
+    public List<MapData> getMaps() {
 
+        switch (this.gamemode) {
+            case 2:
+                return MapData.getRushMaps();
+            case 4:
+                return MapData.getTDMMaps();
+            case 5:
+                return MapData.getCTFMaps();
+            default:
+                return List.of();
+        }
+    }
 
+    private List<MapData> getHighestVotedMaps() {
 
+        // Get map votes
+
+        Map<MapData, Integer> mapVotes = new HashMap<>();
+
+        for (UUID playerId : this.getPlayers().keySet()) {
+            LobbyPlayerData playerData = this.players.get(playerId);
+
+            if (playerData.getVote() == null) {
+                continue;
+            }
+
+            if (mapVotes.containsKey(playerData.getVote())) {
+                mapVotes.put(playerData.getVote(), mapVotes.get(playerData.getVote()) + 1);
+            } else {
+                mapVotes.put(playerData.getVote(), 1);
+            }
+
+        }
+
+        // Get list of maps with the highest vote count
+
+        List<MapData> highestVotedMaps = new ArrayList<>();
+        int maxVotes = Integer.MIN_VALUE;
+
+        for (Map.Entry<MapData, Integer> entry : mapVotes.entrySet()) {
+            int votes = entry.getValue();
+            if (votes > maxVotes) {
+                maxVotes = votes;
+                highestVotedMaps.clear();
+                highestVotedMaps.add(entry.getKey());
+            } else if (votes == maxVotes) {
+                highestVotedMaps.add(entry.getKey());
+            }
+        }
+
+        return highestVotedMaps;
+
+    }
+
+    private void autoSelectMap() {
+
+        MapData selectedMap = null;
+
+        if (this.mapVoting) {
+
+            List<MapData> highestVotedMaps = this.getHighestVotedMaps();
+
+            if (!highestVotedMaps.isEmpty()) {
+
+                selectedMap = highestVotedMaps.get(new Random().nextInt(highestVotedMaps.size()));
+
+            }
+
+        }
+
+        if (selectedMap == null) {
+
+            if (!this.getMaps().isEmpty()) {
+
+                selectedMap = this.getMaps().get(new Random().nextInt(this.getMaps().size()));
+
+            }
+
+        }
+
+        this.selectedMap = selectedMap;
+
+    }
+
+    private void displayMap() {
+
+        for (UUID playerId : this.getPlayers().keySet()) {
+            Player player = this.plugin.getServer().getPlayer(playerId);
+
+            if (player == null) {
+                continue;
+            }
+
+            if (this.selectedMap == null) {
+                return;
+            }
+
+            player.sendMessage("§bThe map has been set to " + this.selectedMap.getName());
+
+        }
+
+    }
+
+    @Override
+    public GamePart getNextStatus() {
+
+        if (this.selectedMap == null) {
+            this.autoSelectMap();
+            this.displayMap();
+        }
+
+        if (selectedMap == null) {
+            this.plugin.getLogger().warning("Game stopped because no world was selected");
+            this.plugin.stopGame();
+            return null;
+        }
+
+        World world = this.plugin.loadWorld(this.plugin.getConfigManager().getConfig().optString("world", "acm2"));
+
+        if (world == null || !this.plugin.getServer().getWorlds().contains(world)) {
+            this.plugin.getLogger().warning("Game stopped because world does not exist");
+            return null;
+        }
+
+        if (world == this.plugin.getServer().getWorlds().get(0)) {
+            this.plugin.getLogger().warning("Game stopped because selected world is default world on server");
+            return null;
+        }
+
+        world.setAutoSave(false);
+
+        return new Game(this.plugin, world);
     }
 
     public Map<UUID, LobbyPlayerData> getPlayers() {
         return Map.copyOf(this.players);
+    }
+
+    public MapData getSelectedMap() {
+        return this.selectedMap;
+    }
+
+    public void selectMap(MapData mapData) {
+        this.selectedMap = mapData;
     }
 }
