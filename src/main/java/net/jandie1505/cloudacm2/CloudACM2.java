@@ -140,6 +140,7 @@ public class CloudACM2 extends JavaPlugin {
         this.getLogger().info("Disabling plugin CloudACM");
 
         this.stopGame();
+        this.getNMS().getPackRepository().removePack(this.datapackName);
 
         this.getLogger().info("CloudACM was successfully disabled");
     }
