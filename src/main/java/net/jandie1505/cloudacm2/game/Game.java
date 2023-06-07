@@ -26,6 +26,7 @@ public class Game implements GamePart {
     private final int selectedMap;
     private final Map<UUID, PlayerData> players;
     private int mapState;
+    private int mapTimer;
 
     public Game(CloudACM2 plugin, int gamemode, int selectedMap, Map<UUID, LobbyPlayerData> players) {
         this.plugin = plugin;
@@ -34,6 +35,7 @@ public class Game implements GamePart {
         this.selectedMap = selectedMap;
         this.players = new HashMap<>();
         this.mapState = 0;
+        this.mapTimer = 0;
 
         for (UUID playerId : players.keySet()) {
             LobbyPlayerData lobbyPlayerData = players.get(playerId);
@@ -61,6 +63,7 @@ public class Game implements GamePart {
         // Stop game
 
         if (this.killswitch) {
+            this.plugin.getLogger().warning("killswitch triggered");
             return false;
         }
 
@@ -105,9 +108,9 @@ public class Game implements GamePart {
             switch (this.mapState) {
                 case 0, 1, 2, 3 -> {
 
-                    player.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 11, 255, false, false));
-                    player.addPotionEffect(new PotionEffect(PotionEffectType.DARKNESS, 11, 255, false, false));
-                    player.sendTitle("§6§lPREPARING GAME...", "§7§lThis will take about 3 seconds. Please wait...", 0, 11, 0);
+                    player.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 20, 255, false, false));
+                    player.addPotionEffect(new PotionEffect(PotionEffectType.DARKNESS, 20, 255, false, false));
+                    player.sendTitle("§6§lPREPARING GAME...", "§7§lThis will take about 10 seconds. Please wait...", 0, 11, 0);
 
                 }
                 case 4 -> {
@@ -123,66 +126,78 @@ public class Game implements GamePart {
 
         // Map State Management
 
-        switch (this.mapState) {
-            case 0 -> {
-                gameMode.setScore(ACM2GameMode.NONE);
-                gameState.setScore(ACM2GameState.RESET);
-                this.mapState++;
-            }
-            case 1 -> {
-                if (gameState.getScore() != ACM2GameState.NONE) {
-                    return false;
-                }
+        if (this.mapTimer >= 4) {
 
-                gameMode.setScore(this.gamemode);
-                gameState.setScore(ACM2GameState.START_LOBBY);
-                this.setMapScore(this.selectedMap);
-                this.mapState++;
-            }
-            case 2 -> {
-                if (gameState.getScore() != ACM2GameState.LOBBY) {
-                    return false;
-                }
-
-                this.setMapScore(this.selectedMap);
-
-                for (UUID playerId : this.getPlayers().keySet()) {
-                    Player player = this.plugin.getServer().getPlayer(playerId);
-                    PlayerData playerData = this.players.get(playerId);
-
-                    if (player == null || playerData == null) {
-                        continue;
-                    }
-
-                    Score playerState = scoreboard.getOrCreatePlayerScore(player.getName(), playerStateObjective);
-                    playerState.setScore(ACM2PlayerState.getPlayerScore(ACM2GameState.LOBBY, this.gamemode, playerData.getTeam()));
-                }
-
-                this.mapState++;
-            }
-            case 3 -> {
-                if (gameState.getScore() != ACM2GameState.LOBBY) {
-                    return false;
-                }
-
-                gameState.setScore(ACM2GameState.START_GAME);
-
-                this.mapState++;
-            }
-            case 4 -> {
-                if (gameState.getScore() != ACM2GameState.GAME && gameState.getScore() != ACM2GameState.START_ENDLOBBY && gameState.getScore() != ACM2GameState.ENDLOBBY) {
-                    return false;
-                }
-
-                if (gameState.getScore() == ACM2GameState.ENDLOBBY) {
-                    this.plugin.setDatapackStatus(false);
-                    this.plugin.nextStatus();
+            switch (this.mapState) {
+                case 0 -> {
+                    gameMode.setScore(ACM2GameMode.NONE);
+                    gameState.setScore(ACM2GameState.RESET);
                     this.mapState++;
                 }
+                case 1 -> {
+                    if (gameState.getScore() != ACM2GameState.NONE) {
+                        this.plugin.getLogger().warning("Wrong game state [1]: state has to be 0 but is " + gameState.getScore());
+                        return false;
+                    }
+
+                    gameMode.setScore(this.gamemode);
+                    gameState.setScore(ACM2GameState.START_LOBBY);
+                    this.setMapScore(this.selectedMap);
+                    this.mapState++;
+                }
+                case 2 -> {
+                    if (gameState.getScore() != ACM2GameState.LOBBY) {
+                        this.plugin.getLogger().warning("Wrong game state [2]: state has to be 2 but is " + gameState.getScore());
+                        return false;
+                    }
+
+                    this.setMapScore(this.selectedMap);
+
+                    for (UUID playerId : this.getPlayers().keySet()) {
+                        Player player = this.plugin.getServer().getPlayer(playerId);
+                        PlayerData playerData = this.players.get(playerId);
+
+                        if (player == null || playerData == null) {
+                            continue;
+                        }
+
+                        Score playerState = scoreboard.getOrCreatePlayerScore(player.getName(), playerStateObjective);
+                        playerState.setScore(ACM2PlayerState.getPlayerScore(ACM2GameState.LOBBY, this.gamemode, playerData.getTeam()));
+                    }
+
+                    this.mapState++;
+                }
+                case 3 -> {
+                    if (gameState.getScore() != ACM2GameState.LOBBY) {
+                        this.plugin.getLogger().warning("Wrong game state [3]: state has to be 2 but is " + gameState.getScore());
+                        return false;
+                    }
+
+                    gameState.setScore(ACM2GameState.START_GAME);
+
+                    this.mapState++;
+                }
+                case 4 -> {
+                    if (gameState.getScore() != ACM2GameState.GAME && gameState.getScore() != ACM2GameState.START_ENDLOBBY && gameState.getScore() != ACM2GameState.ENDLOBBY) {
+                        this.plugin.getLogger().warning("Wrong game state [4]: state has to be 4, 5 or 6 but is " + gameState.getScore());
+                        return false;
+                    }
+
+                    if (gameState.getScore() == ACM2GameState.ENDLOBBY) {
+                        this.plugin.getLogger().info("Game end. Proceeding to endlobby...");
+                        this.plugin.setDatapackStatus(false);
+                        this.plugin.nextStatus();
+                        this.mapState++;
+                    }
+                }
+                default -> {
+                    return false;
+                }
             }
-            default -> {
-                return false;
-            }
+
+            this.mapTimer = 0;
+        } else {
+            this.mapTimer++;
         }
 
         return true;

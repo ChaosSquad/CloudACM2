@@ -7,6 +7,7 @@ import net.jandie1505.cloudacm2.lobby.Lobby;
 import net.jandie1505.configmanager.ConfigManager;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.dedicated.DedicatedServer;
+import net.minecraft.server.packs.repository.Pack;
 import net.minecraft.server.packs.repository.PackRepository;
 import org.bukkit.NamespacedKey;
 import org.bukkit.OfflinePlayer;
@@ -56,7 +57,9 @@ public class CloudACM2 extends JavaPlugin {
 
         this.getServer().getScheduler().scheduleSyncRepeatingTask(this, () -> {
 
-            if (!packRepository.getAvailableIds().contains(this.datapackName)) {
+            Pack pack = packRepository.getPack(this.datapackName);
+
+            if (pack == null) {
                 this.getLogger().log(Level.SEVERE, "Data Pack not found");
                 this.getServer().getPluginManager().disablePlugin(this);
                 return;
@@ -65,20 +68,22 @@ public class CloudACM2 extends JavaPlugin {
             if (this.getDatapackStatus()) {
 
                 if (!packRepository.getSelectedIds().contains(this.datapackName)) {
-                    packRepository.addPack(this.datapackName);
+                    packRepository.addPack(pack.getId());
+                    this.getNMS().reloadResources(packRepository.getSelectedPacks().stream().map(Pack::getId).toList());
                     this.getLogger().info("Data Pack enabled");
                 }
 
             } else {
 
                 if (packRepository.getSelectedIds().contains(this.datapackName)) {
-                    packRepository.removePack(this.datapackName);
+                    packRepository.removePack(pack.getId());
+                    this.getNMS().reloadResources(packRepository.getSelectedPacks().stream().map(Pack::getId).toList());
                     this.getLogger().info("Data Pack disabled");
                 }
 
             }
 
-        }, 0, 2);
+        }, 0, 1);
 
         this.getServer().getScheduler().scheduleSyncRepeatingTask(this, () -> {
 
