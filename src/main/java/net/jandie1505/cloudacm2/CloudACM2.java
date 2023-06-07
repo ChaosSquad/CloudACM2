@@ -2,43 +2,83 @@ package net.jandie1505.cloudacm2;
 
 import net.jandie1505.cloudacm2.commands.ACM2Command;
 import net.jandie1505.cloudacm2.config.DefaultConfigValues;
-import net.jandie1505.configmanager.ConfigManager;
 import net.jandie1505.cloudacm2.game.Game;
 import net.jandie1505.cloudacm2.lobby.Lobby;
-import org.bukkit.Location;
+import net.jandie1505.configmanager.ConfigManager;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.dedicated.DedicatedServer;
+import net.minecraft.server.packs.repository.PackRepository;
+import org.bukkit.NamespacedKey;
 import org.bukkit.OfflinePlayer;
-import org.bukkit.World;
-import org.bukkit.WorldCreator;
+import org.bukkit.craftbukkit.v1_19_R3.CraftServer;
 import org.bukkit.entity.Player;
+import org.bukkit.packs.DataPack;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
+import java.util.logging.Level;
 
 public class CloudACM2 extends JavaPlugin {
     private ConfigManager configManager;
-    private List<World> managedWorlds;
     private int gameTimer;
     private List<UUID> bypassingPlayers;
     private GamePart game;
     private boolean nextStatus;
+    private boolean datapackStatus;
+    private String datapackName;
 
     @Override
     public void onEnable() {
         this.configManager = new ConfigManager(DefaultConfigValues.getConfig(), false, this.getDataFolder(), "config.json");
         this.configManager.reloadConfig();
-        this.managedWorlds = new ArrayList<>();
         this.gameTimer = 0;
         this.bypassingPlayers = new ArrayList<>();
         this.game = null;
         this.nextStatus = false;
+        this.datapackStatus = false;
+        this.datapackName = "file/" + this.configManager.getConfig().optString("datapack", "data_pack");
 
         this.getCommand("cloudacm2").setExecutor(new ACM2Command(this));
         this.getCommand("cloudacm2").setTabCompleter(new ACM2Command(this));
 
         this.getServer().getPluginManager().registerEvents(new EventListener(this), this);
+
+        PackRepository packRepository = this.getNMS().getPackRepository();
+
+        if (!packRepository.getAvailableIds().contains(this.datapackName)) {
+            this.getLogger().log(Level.SEVERE, "Data Pack not found");
+            this.getServer().getPluginManager().disablePlugin(this);
+            return;
+        }
+
+        this.getServer().getScheduler().scheduleSyncRepeatingTask(this, () -> {
+
+            if (!packRepository.getAvailableIds().contains(this.datapackName)) {
+                this.getLogger().log(Level.SEVERE, "Data Pack not found");
+                this.getServer().getPluginManager().disablePlugin(this);
+                return;
+            }
+
+            if (this.getDatapackStatus()) {
+
+                if (!packRepository.getSelectedIds().contains(this.datapackName)) {
+                    packRepository.addPack(this.datapackName);
+                    this.getLogger().info("Data Pack enabled");
+                }
+
+            } else {
+
+                if (packRepository.getSelectedIds().contains(this.datapackName)) {
+                    packRepository.removePack(this.datapackName);
+                    this.getLogger().info("Data Pack disabled");
+                }
+
+            }
+
+        }, 0, 2);
 
         this.getServer().getScheduler().scheduleSyncRepeatingTask(this, () -> {
 
@@ -88,12 +128,8 @@ public class CloudACM2 extends JavaPlugin {
 
             }
 
-            for (World world : this.getManagedWorlds()) {
-
-                if (!(this.game instanceof Game) || ((Game) this.game).getWorld() != world) {
-                    this.unloadWorld(world);
-                }
-
+            if (!(this.game instanceof Game)) {
+                this.datapackStatus = false;
             }
 
         }, 0, 10);
@@ -104,10 +140,6 @@ public class CloudACM2 extends JavaPlugin {
         this.getLogger().info("Disabling plugin CloudACM");
 
         this.stopGame();
-
-        for (World world : this.getManagedWorlds()) {
-            this.unloadWorld(world);
-        }
 
         this.getLogger().info("CloudACM was successfully disabled");
     }
@@ -130,62 +162,6 @@ public class CloudACM2 extends JavaPlugin {
 
     public GamePart getGame() {
         return this.game;
-    }
-
-    public List<World> getManagedWorlds() {
-        return List.copyOf(this.managedWorlds);
-    }
-
-    public boolean unloadWorld(World world) {
-
-        if (world == null || this.getServer().getWorlds().get(0) == world || !this.managedWorlds.contains(world) || !this.getServer().getWorlds().contains(world)) {
-            return false;
-        }
-
-        UUID uid = world.getUID();
-        int index = this.getServer().getWorlds().indexOf(world);
-        String name = world.getName();
-
-        for (Player player : world.getPlayers()) {
-            player.teleport(new Location(this.getServer().getWorlds().get(0), 0, 0, 0));
-        }
-
-        boolean success = this.getServer().unloadWorld(world, false);
-
-        if (success) {
-            this.managedWorlds.remove(world);
-            this.getLogger().info("Unloaded world [" + index + "] " + uid + " (" + name + ")");
-        } else {
-            this.getLogger().warning("Error white unloading world [" + index + "] " + uid + " (" + name + ")");
-        }
-
-        return success;
-
-    }
-
-    public World loadWorld(String name) {
-
-        World world = this.getServer().getWorld(name);
-
-        if (world != null) {
-            this.managedWorlds.add(world);
-            world.setAutoSave(false);
-            this.getLogger().info("World [" + this.getServer().getWorlds().indexOf(world) + "] " + world.getUID() + " (" + world.getName() + ") is already loaded and was added to managed worlds");
-            return world;
-        }
-
-        world = this.getServer().createWorld(new WorldCreator(name));
-
-        if (world != null) {
-            this.managedWorlds.add(world);
-            world.setAutoSave(false);
-            this.getLogger().info("Loaded world [" + this.getServer().getWorlds().indexOf(world) + "] " + world.getUID() + " (" + world.getName() + ")");
-        } else {
-            this.getLogger().warning("Error while loading world " + name);
-        }
-
-        return world;
-
     }
 
     public List<UUID> getBypassingPlayers() {
@@ -228,5 +204,17 @@ public class CloudACM2 extends JavaPlugin {
         } catch (IllegalArgumentException e) {
             return this.getServer().getOfflinePlayer(playerString);
         }
+    }
+
+    public DedicatedServer getNMS() {
+        return ((CraftServer) this.getServer()).getServer();
+    }
+
+    public boolean getDatapackStatus() {
+        return this.game instanceof Game && this.datapackStatus;
+    }
+
+    public void setDatapackStatus(boolean status) {
+        this.datapackStatus = status;
     }
 }

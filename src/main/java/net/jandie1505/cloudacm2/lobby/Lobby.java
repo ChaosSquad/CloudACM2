@@ -282,23 +282,8 @@ public class Lobby implements GamePart {
             return null;
         }
 
-        World world = this.plugin.loadWorld(this.plugin.getConfigManager().getConfig().optString("world", "acm2"));
-
-        if (world == null || !this.plugin.getServer().getWorlds().contains(world)) {
-            this.plugin.getLogger().warning("Game stopped because world does not exist");
-            return null;
-        }
-
-        if (world == this.plugin.getServer().getWorlds().get(0)) {
-            this.plugin.getLogger().warning("Game stopped because selected world is default world on server");
-            return null;
-        }
-
-        world.setAutoSave(false);
-
         return new Game(
                 this.plugin,
-                world,
                 this.gamemode,
                 this.selectedMap.getId(),
                 this.getPlayers()

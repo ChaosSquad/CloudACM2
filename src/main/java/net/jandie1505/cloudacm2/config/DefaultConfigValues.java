@@ -10,7 +10,7 @@ public class DefaultConfigValues {
         // reload
 
         config.put("lobbyTime", 90);
-        config.put("world", "acm2");
+        config.put("datapack", "data_pack");
         config.put("gamemode", 0);
         config.put("mapVoting", false);
 
