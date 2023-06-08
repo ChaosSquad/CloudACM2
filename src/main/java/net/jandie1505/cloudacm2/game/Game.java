@@ -108,12 +108,29 @@ public class Game implements GamePart {
             switch (this.mapState) {
                 case 0, 1, 2, 3 -> {
 
-                    player.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 20, 255, false, false));
-                    player.addPotionEffect(new PotionEffect(PotionEffectType.DARKNESS, 20, 255, false, false));
-                    player.sendTitle("§6§lPREPARING GAME...", "§7§lThis will take about 10 seconds. Please wait...", 0, 11, 0);
+                    player.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 300*20, 255, false, false));
+                    player.addPotionEffect(new PotionEffect(PotionEffectType.DARKNESS, 300*20, 255, false, false));
+                    player.sendTitle("§6§lPREPARING GAME...", "§7§lThis will take about 10 seconds. Please wait...", 0, 20, 0);
 
                 }
                 case 4 -> {
+
+                    player.removePotionEffect(PotionEffectType.BLINDNESS);
+                    player.removePotionEffect(PotionEffectType.DARKNESS);
+
+                    player.setHealth(20);
+                    player.setFoodLevel(20);
+                    player.setSaturation(20);
+
+                    if (this.mapTimer >= 4) {
+                        for (int i = 0; i < 100; i++) {
+                            player.sendMessage("");
+                        }
+                        player.sendMessage("§6From this point on, the map runs completely without plugins");
+                    }
+
+                }
+                case 5 -> {
 
                     if (!player.getInventory().contains(Material.BREAD)) {
                         player.getInventory().addItem(new ItemStack(Material.BREAD, 15));
@@ -177,13 +194,14 @@ public class Game implements GamePart {
 
                     this.mapState++;
                 }
-                case 4 -> {
-                    if (gameState.getScore() != ACM2GameState.GAME && gameState.getScore() != ACM2GameState.START_ENDLOBBY && gameState.getScore() != ACM2GameState.ENDLOBBY) {
+                case 4 -> this.mapState++;
+                case 5 -> {
+                    if (gameState.getScore() < ACM2GameState.GAME || gameState.getScore() > ACM2GameState.RESET) {
                         this.plugin.getLogger().warning("Wrong game state [4]: state has to be 4, 5 or 6 but is " + gameState.getScore());
                         return false;
                     }
 
-                    if (gameState.getScore() == ACM2GameState.ENDLOBBY) {
+                    if (gameState.getScore() == ACM2GameState.NONE) {
                         this.plugin.getLogger().info("Game end. Proceeding to endlobby...");
                         this.plugin.setDatapackStatus(false);
                         this.plugin.nextStatus();
