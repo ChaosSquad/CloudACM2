@@ -290,6 +290,10 @@ public class Lobby implements GamePart {
         );
     }
 
+    public CloudACM2 getPlugin() {
+        return this.plugin;
+    }
+
     public Map<UUID, LobbyPlayerData> getPlayers() {
         return Map.copyOf(this.players);
     }
