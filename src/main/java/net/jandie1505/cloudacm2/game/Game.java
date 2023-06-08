@@ -24,7 +24,7 @@ public class Game implements GamePart {
     private boolean killswitch;
     private final int gamemode;
     private final int selectedMap;
-    private final Map<UUID, PlayerData> players;
+    private final Map<UUID, Integer> playerTeams;
     private int mapState;
     private int mapTimer;
 
@@ -33,7 +33,7 @@ public class Game implements GamePart {
         this.killswitch = false;
         this.gamemode = gamemode;
         this.selectedMap = selectedMap;
-        this.players = new HashMap<>();
+        this.playerTeams = new HashMap<>();
         this.mapState = 0;
         this.mapTimer = 0;
 
@@ -45,13 +45,11 @@ public class Game implements GamePart {
                 continue;
             }
 
-            PlayerData playerData = new PlayerData();
-
-            if (lobbyPlayerData.getTeam() >= 1 && lobbyPlayerData.getTeam() <= 2) {
-                playerData.setTeam(lobbyPlayerData.getTeam());
+            if (!(lobbyPlayerData.getTeam() >= 1 && lobbyPlayerData.getTeam() <= 2)) {
+                continue;
             }
 
-            this.players.put(playerId, playerData);
+            this.playerTeams.put(playerId, lobbyPlayerData.getTeam());
         }
 
         this.plugin.setDatapackStatus(true);
@@ -81,17 +79,10 @@ public class Game implements GamePart {
 
         // Check players
 
-        for (UUID playerId : this.getPlayers().keySet()) {
-            Player player = this.plugin.getServer().getPlayer(playerId);
-
-            if (player == null) {
-                this.players.remove(playerId);
-                continue;
-            }
-
+        for (Player player : this.plugin.getServer().getOnlinePlayers()) {
             Score playerBypass = scoreboard.getOrCreatePlayerScore(player.getName(), playerBypassObjective);
 
-            if (this.plugin.isPlayerBypassing(playerId)) {
+            if (this.plugin.isPlayerBypassing(player.getUniqueId())) {
 
                 if (playerBypass.getScore() != 1) {
                     playerBypass.setScore(1);
@@ -170,16 +161,11 @@ public class Game implements GamePart {
 
                     this.setMapScore(this.selectedMap);
 
-                    for (UUID playerId : this.getPlayers().keySet()) {
-                        Player player = this.plugin.getServer().getPlayer(playerId);
-                        PlayerData playerData = this.players.get(playerId);
-
-                        if (player == null || playerData == null) {
-                            continue;
-                        }
+                    for (Player player : this.plugin.getServer().getOnlinePlayers()) {
+                        int team = this.playerTeams.get(player.getUniqueId());
 
                         Score playerState = scoreboard.getOrCreatePlayerScore(player.getName(), playerStateObjective);
-                        playerState.setScore(ACM2PlayerState.getPlayerScore(ACM2GameState.LOBBY, this.gamemode, playerData.getTeam()));
+                        playerState.setScore(ACM2PlayerState.getPlayerScore(ACM2GameState.LOBBY, this.gamemode, team));
                     }
 
                     this.mapState++;
@@ -224,20 +210,6 @@ public class Game implements GamePart {
     @Override
     public GamePart getNextStatus() {
         return null;
-    }
-
-    public Map<UUID, PlayerData> getPlayers() {
-        return Map.copyOf(this.players);
-    }
-
-    public void addPlayer(UUID playerId) {
-        if (!this.players.containsKey(playerId)) {
-            this.players.put(playerId, new PlayerData());
-        }
-    }
-
-    public void removePlayer(UUID playerId) {
-        this.players.remove(playerId);
     }
 
     private void setMapScore(int map) {
