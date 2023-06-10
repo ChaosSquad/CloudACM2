@@ -340,7 +340,7 @@ public class Lobby implements GamePart {
         meta.setDisplayName("§r§6Map Voting §r§7(right click)");
 
         List<String> lore = new ArrayList<>();
-        lore.add(0, "0");
+        lore.add(0, "1");
         meta.setLore(lore);
 
         item.setItemMeta(meta);
@@ -355,7 +355,7 @@ public class Lobby implements GamePart {
         meta.setDisplayName("§r§6Team Selection §r§7(right click)");
 
         List<String> lore = new ArrayList<>();
-        lore.add(0, "1");
+        lore.add(0, "2");
         meta.setLore(lore);
 
         item.setItemMeta(meta);

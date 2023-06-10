@@ -13,6 +13,7 @@ import org.bukkit.NamespacedKey;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.craftbukkit.v1_19_R3.CraftServer;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.packs.DataPack;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -222,5 +223,30 @@ public class CloudACM2 extends JavaPlugin {
 
     public void setDatapackStatus(boolean status) {
         this.datapackStatus = status;
+    }
+
+    public static int getItemId(ItemStack item) {
+
+        if (item == null) {
+            return -1;
+        }
+
+        if (item.getItemMeta() == null) {
+            return -1;
+        }
+
+        if (item.getItemMeta().getLore() == null) {
+            return -1;
+        }
+
+        if (item.getItemMeta().getLore().isEmpty()) {
+            return -1;
+        }
+
+        try {
+            return Integer.parseInt(item.getItemMeta().getLore().get(0));
+        } catch (IllegalArgumentException e) {
+            return -1;
+        }
     }
 }
