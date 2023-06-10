@@ -219,30 +219,10 @@ public class ACM2Command implements CommandExecutor, TabCompleter {
         String mapName = args[1];
 
         for (int i = 2; i < args.length; i++) {
-
             mapName = mapName + " " + args[i];
-
         }
 
-        MapData mapData = null;
-
-        for (MapData map : List.copyOf(((Lobby) this.plugin.getGame()).getMaps())) {
-
-            if (mapName.startsWith("id:")) {
-
-                if (String.valueOf(map.getId()).equals(mapName.substring(3))) {
-                    mapData = map;
-                }
-
-            } else {
-
-                if (map.getName().equals(mapName)) {
-                    mapData = map;
-                }
-
-            }
-
-        }
+        MapData mapData = this.getMapFromString(mapName);
 
         if (mapData == null) {
             sender.sendMessage("§cMap does not exist");
@@ -427,9 +407,9 @@ public class ACM2Command implements CommandExecutor, TabCompleter {
             switch (args[3]) {
                 case "vote" -> {
                     if (playerData.getVote() != null) {
-                        sender.sendMessage("Vtoe: " + playerData.getVote().getName() + " (" + playerData.getVote().getId() + ")");
+                        sender.sendMessage("§7Vote: " + playerData.getVote().getName() + " (" + playerData.getVote().getId() + ")");
                     } else {
-                        sender.sendMessage("Vote: ---");
+                        sender.sendMessage("§7Vote: ---");
                     }
                 }
                 case "team" -> sender.sendMessage("§cTeams are currently not supported");
@@ -439,6 +419,87 @@ public class ACM2Command implements CommandExecutor, TabCompleter {
             return;
         }
 
+        if (args[1].equalsIgnoreCase("set")) {
+
+            if (!(this.plugin.getGame() instanceof Lobby)) {
+                sender.sendMessage("§cA lobby must be running to get player information");
+                return;
+            }
+
+            if (args.length < 5) {
+                sender.sendMessage("§cUsage: /cloudacm2 players set <uuid/player> vote/team <value>");
+                return;
+            }
+
+            UUID playerId = this.plugin.getPlayerUUIDFromString(args[2]);
+
+            if (playerId == null) {
+                sender.sendMessage("§cPlayer not found");
+                return;
+            }
+
+            LobbyPlayerData playerData = ((Lobby) this.plugin.getGame()).getPlayers().get(playerId);
+
+            if (playerData == null) {
+                sender.sendMessage("§cPlayer not in lobby");
+                return;
+            }
+
+            switch (args[3]) {
+                case "vote" -> {
+                    if (args[4].equalsIgnoreCase("null")) {
+                        sender.sendMessage("§aCleared vote");
+                    } else {
+
+                        String mapName = args[4];
+
+                        for (int i = 2; i < args.length; i++) {
+                            mapName = mapName + " " + args[i];
+                        }
+
+                        MapData mapData = this.getMapFromString(mapName);
+
+                        if (mapData == null) {
+                            sender.sendMessage("§cMap does not exist");
+                            return;
+                        }
+
+                        playerData.setVote(mapData);
+
+                    }
+                }
+                case "team" -> sender.sendMessage("§cTeams are currently not supported");
+                default -> sender.sendMessage("§cValue not found");
+            }
+
+            return;
+        }
+
+    }
+
+    private MapData getMapFromString(String mapName) {
+
+        MapData mapData = null;
+
+        for (MapData map : List.copyOf(((Lobby) this.plugin.getGame()).getMaps())) {
+
+            if (mapName.startsWith("id:")) {
+
+                if (String.valueOf(map.getId()).equals(mapName.substring(3))) {
+                    mapData = map;
+                }
+
+            } else {
+
+                if (map.getName().equals(mapName)) {
+                    mapData = map;
+                }
+
+            }
+
+        }
+
+        return mapData;
     }
 
     public boolean hasAdminPermission(CommandSender sender) {
