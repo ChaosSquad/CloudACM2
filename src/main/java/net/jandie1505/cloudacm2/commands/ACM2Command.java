@@ -3,6 +3,7 @@ package net.jandie1505.cloudacm2.commands;
 import net.jandie1505.cloudacm2.CloudACM2;
 import net.jandie1505.cloudacm2.game.Game;
 import net.jandie1505.cloudacm2.lobby.Lobby;
+import net.jandie1505.cloudacm2.lobby.LobbyPlayerData;
 import net.jandie1505.cloudacm2.lobby.MapData;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.*;
@@ -33,6 +34,8 @@ public class ACM2Command implements CommandExecutor, TabCompleter {
             case "bypass" -> this.bypassSubcommand(sender, args);
             case "map", "maps" -> this.mapsSubcommand(sender);
             case "forcemap" -> this.forcemapSubcommand(sender, args);
+            case "votemap" -> this.votemapCommand(sender, args);
+            case "player", "players" -> this.playerSubcommand(sender, args);
             default -> sender.sendMessage("§cUnknown subcommand");
         }
 
@@ -248,6 +251,193 @@ public class ACM2Command implements CommandExecutor, TabCompleter {
 
         ((Lobby) this.plugin.getGame()).selectMap(mapData);
         sender.sendMessage("§aMap successfully selected");
+
+    }
+
+    public void votemapCommand(CommandSender sender, String[] args) {
+
+        if (!(this.plugin.getGame() instanceof Lobby)) {
+            sender.sendMessage("§cNo lobby running");
+            return;
+        }
+
+        if (!(sender instanceof Player)) {
+            sender.sendMessage("§cThe command needs to be executed by a player");
+            return;
+        }
+
+        LobbyPlayerData playerData = ((Lobby) this.plugin.getGame()).getPlayers().get(((Player) sender).getUniqueId());
+
+        if (playerData == null) {
+            sender.sendMessage("§cYou are not in the lobby");
+            return;
+        }
+
+        if (!((Lobby) this.plugin.getGame()).isMapVoting() || ((Lobby) this.plugin.getGame()).getSelectedMap() != null) {
+            sender.sendMessage("§cMap voting is already over");
+            return;
+        }
+
+        if (args.length < 2) {
+            playerData.setVote(null);
+            sender.sendMessage("§aYou successfully removed your vote");
+            return;
+        }
+
+        String mapName = args[1];
+
+        for (int i = 2; i < args.length; i++) {
+
+            mapName = mapName + " " + args[i];
+
+        }
+
+        MapData mapData = null;
+
+        for (MapData map : ((Lobby) this.plugin.getGame()).getMaps()) {
+
+            if (map.getName().equals(mapName)) {
+                mapData = map;
+                break;
+            }
+
+        }
+
+        if (mapData == null) {
+            sender.sendMessage("§cMap does not exist");
+            return;
+        }
+
+        playerData.setVote(mapData);
+        sender.sendMessage("§aYou voted for " + mapData.getName());
+
+    }
+
+    public void playerSubcommand(CommandSender sender, String[] args) {
+
+        if (!this.hasAdminPermission(sender)) {
+            return;
+        }
+
+        if (args.length < 2) {
+            sender.sendMessage("§cUsage: /cloudacm2 players add/remove/list/get/set");
+            return;
+        }
+
+        if (args[1].equalsIgnoreCase("add")) {
+
+            if (args.length < 3) {
+                sender.sendMessage("§c/cloudacm2 players add <uuid/name>");
+                return;
+            }
+
+            if (!(this.plugin.getGame() instanceof Lobby)) {
+                sender.sendMessage("§cA lobby must be running to add players\n§cTo add players during a running game, you need to use the scoreboard objectives");
+                return;
+            }
+
+            UUID playerId = this.plugin.getPlayerUUIDFromString(args[2]);
+
+            if (playerId == null) {
+                sender.sendMessage("§cPlayer not found");
+                return;
+            }
+
+            ((Lobby) this.plugin.getGame()).addPlayer(playerId);
+            sender.sendMessage("§aPlayer successfully added");
+
+            return;
+        }
+
+        if (args[1].equalsIgnoreCase("remove")) {
+
+            if (args.length < 3) {
+                sender.sendMessage("§c/cloudacm2 players remove <uuid/name>");
+                return;
+            }
+
+            if (!(this.plugin.getGame() instanceof Lobby)) {
+                sender.sendMessage("§cA lobby must be running to remove players\n§cTo remove players during a running game, you need to use the scoreboard objectives");
+                return;
+            }
+
+            UUID playerId = this.plugin.getPlayerUUIDFromString(args[2]);
+
+            if (playerId == null) {
+                sender.sendMessage("§cPlayer not found");
+                return;
+            }
+
+            ((Lobby) this.plugin.getGame()).removePlayer(playerId);
+            sender.sendMessage("§aPlayer successfully removed");
+
+            return;
+        }
+
+        if (args[1].equalsIgnoreCase("list")) {
+
+            if (!(this.plugin.getGame() instanceof Lobby)) {
+                sender.sendMessage("§cA lobby must be running to list players\n§cTo list players during a running game, you need to look into the tablist or use the scoreboard objectives");
+                return;
+            }
+
+            sender.sendMessage("§7PLAYER LIST:");
+
+            for (UUID playerId : ((Lobby) this.plugin.getGame()).getPlayers().keySet()) {
+                Player player = this.plugin.getServer().getPlayer(playerId);
+
+                if (player == null) {
+                    sender.sendMessage("§7" + playerId + " [OFFLINE]");
+                    continue;
+                }
+
+                sender.sendMessage("§7" + player.getName() + " (" + player.getUniqueId() + ")");
+
+            }
+
+            return;
+        }
+
+        if (args[1].equalsIgnoreCase("get")) {
+
+            if (!(this.plugin.getGame() instanceof Lobby)) {
+                sender.sendMessage("§cA lobby must be running to get player information");
+                return;
+            }
+
+            if (args.length < 4) {
+                sender.sendMessage("§cUsage: /cloudacm2 players get <uuid/player> vote/team");
+                return;
+            }
+
+            UUID playerId = this.plugin.getPlayerUUIDFromString(args[2]);
+
+            if (playerId == null) {
+                sender.sendMessage("§cPlayer not found");
+                return;
+            }
+
+            LobbyPlayerData playerData = ((Lobby) this.plugin.getGame()).getPlayers().get(playerId);
+
+            if (playerData == null) {
+                sender.sendMessage("§cPlayer not in lobby");
+                return;
+            }
+
+            switch (args[3]) {
+                case "vote" -> {
+                    if (playerData.getVote() != null) {
+                        sender.sendMessage("Vtoe: " + playerData.getVote().getName() + " (" + playerData.getVote().getId() + ")");
+                    } else {
+                        sender.sendMessage("Vote: ---");
+                    }
+                }
+                case "team" -> sender.sendMessage("§cTeams are currently not supported");
+                default -> sender.sendMessage("§cValue not found");
+            }
+
+            return;
+        }
 
     }
 

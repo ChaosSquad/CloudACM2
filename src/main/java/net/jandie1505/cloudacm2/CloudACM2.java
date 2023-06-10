@@ -213,6 +213,20 @@ public class CloudACM2 extends JavaPlugin {
         }
     }
 
+    public UUID getPlayerUUIDFromString(String playerString) {
+        try {
+            return UUID.fromString(playerString);
+        } catch (IllegalArgumentException e) {
+            Player player = this.getServer().getPlayer(playerString);
+
+            if (player != null) {
+                return player.getUniqueId();
+            } else {
+                return null;
+            }
+        }
+    }
+
     public DedicatedServer getNMS() {
         return ((CraftServer) this.getServer()).getServer();
     }

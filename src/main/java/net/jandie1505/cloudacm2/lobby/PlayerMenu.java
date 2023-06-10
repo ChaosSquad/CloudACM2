@@ -103,4 +103,29 @@ public class PlayerMenu implements InventoryHolder {
 
         return item;
     }
+
+    public int getMapId(ItemStack item) {
+
+        if (item == null) {
+            return -1;
+        }
+
+        if (item.getItemMeta() == null) {
+            return -1;
+        }
+
+        if (item.getItemMeta().getLore() == null) {
+            return -1;
+        }
+
+        if (item.getItemMeta().getLore().size() < 2) {
+            return -1;
+        }
+
+        try {
+            return Integer.parseInt(item.getItemMeta().getLore().get(1));
+        } catch (IllegalArgumentException e) {
+            return -1;
+        }
+    }
 }

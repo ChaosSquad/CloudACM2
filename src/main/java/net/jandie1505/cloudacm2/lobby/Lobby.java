@@ -24,6 +24,7 @@ public class Lobby implements GamePart {
     private final boolean enableBorder;
     private final int[] border;
     private final Location lobbySpawn;
+    private final int requiredPlayers;
     private boolean mapVoting;
     private int gamemode;
     private MapData selectedMap;
@@ -49,6 +50,7 @@ public class Lobby implements GamePart {
                 this.plugin.getConfigManager().getConfig().optJSONObject("spawn", new JSONObject()).optFloat("yaw"),
                 this.plugin.getConfigManager().getConfig().optJSONObject("spawn", new JSONObject()).optFloat("pitch")
         );
+        this.requiredPlayers = this.plugin.getConfigManager().getConfig().optInt("requiredPlayers", 2);
         this.gamemode = this.plugin.getConfigManager().getConfig().optInt("gamemode", 0);
         this.selectedMap = null;
         this.mapVoting = this.plugin.getConfigManager().getConfig().optBoolean("mapVoting", false);
@@ -170,7 +172,7 @@ public class Lobby implements GamePart {
 
         // TIME
 
-        if (this.timeStep >= 1) {
+        if (this.timeStep >= 1 && this.players.size() >= this.requiredPlayers) {
 
             if (this.time < 0) {
                 this.plugin.nextStatus();
@@ -331,6 +333,23 @@ public class Lobby implements GamePart {
 
     public void selectMap(MapData mapData) {
         this.selectedMap = mapData;
+    }
+
+    public boolean isMapVoting() {
+        return this.mapVoting;
+    }
+
+    public boolean addPlayer(UUID playerId) {
+        if (!this.players.containsKey(playerId)) {
+            this.players.put(playerId, new LobbyPlayerData());
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    public boolean removePlayer(UUID playerId) {
+        return this.players.remove(playerId) != null;
     }
 
     public ItemStack getLobbyVoteHotbarButton() {
