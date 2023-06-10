@@ -7,8 +7,11 @@ import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.json.JSONObject;
 
 import java.util.*;
@@ -119,6 +122,30 @@ public class Lobby implements GamePart {
 
                 if (!(location.getBlockX() >= this.border[0] && location.getBlockY() >= this.border[1] && location.getBlockZ() >= this.border[2] && location.getBlockX() <= this.border[3] && location.getBlockY() <= this.border[4] && location.getBlockZ() <= this.border[5])) {
                     player.teleport(this.lobbySpawn);
+                }
+
+            }
+
+            if (!this.plugin.isPlayerBypassing(player.getUniqueId())) {
+
+                for (ItemStack item : Arrays.copyOf(player.getInventory().getContents(), player.getInventory().getContents().length)) {
+
+                    if (item == null || item.getType() == Material.AIR) {
+                        continue;
+                    }
+
+                    if (!item.isSimilar(this.getLobbyVoteHotbarButton()) && !item.isSimilar(this.getLobbyTeamSelectionHotbarButton())) {
+                        player.getInventory().clear();
+                    }
+
+                }
+
+                if (!player.getInventory().contains(this.getLobbyVoteHotbarButton())) {
+                    player.getInventory().setItem(3, this.getLobbyVoteHotbarButton());
+                }
+
+                if (!player.getInventory().contains(this.getLobbyTeamSelectionHotbarButton())) {
+                    player.getInventory().setItem(5, this.getLobbyTeamSelectionHotbarButton());
                 }
 
             }
@@ -304,5 +331,35 @@ public class Lobby implements GamePart {
 
     public void selectMap(MapData mapData) {
         this.selectedMap = mapData;
+    }
+
+    public ItemStack getLobbyVoteHotbarButton() {
+        ItemStack item = new ItemStack(Material.MAP);
+        ItemMeta meta = this.plugin.getServer().getItemFactory().getItemMeta(item.getType());
+
+        meta.setDisplayName("§r§6Map Voting §r§7(right click)");
+
+        List<String> lore = new ArrayList<>();
+        lore.add(0, "0");
+        meta.setLore(lore);
+
+        item.setItemMeta(meta);
+
+        return item;
+    }
+
+    public ItemStack getLobbyTeamSelectionHotbarButton() {
+        ItemStack item = new ItemStack(Material.PLAYER_HEAD);
+        ItemMeta meta = this.plugin.getServer().getItemFactory().getItemMeta(item.getType());
+
+        meta.setDisplayName("§r§6Team Selection §r§7(right click)");
+
+        List<String> lore = new ArrayList<>();
+        lore.add(0, "1");
+        meta.setLore(lore);
+
+        item.setItemMeta(meta);
+
+        return item;
     }
 }
