@@ -103,6 +103,10 @@ public class Game implements GamePart {
                     player.addPotionEffect(new PotionEffect(PotionEffectType.DARKNESS, 300*20, 255, false, false));
                     player.sendTitle("§6§lPREPARING GAME...", "§7§lThis will take about 10 seconds. Please wait...", 0, 20, 0);
 
+                    if (!this.plugin.isPlayerBypassing(player.getUniqueId()) && !player.getInventory().isEmpty()) {
+                        player.getInventory().clear();
+                    }
+
                 }
                 case 4 -> {
 
@@ -112,6 +116,10 @@ public class Game implements GamePart {
                     player.setHealth(20);
                     player.setFoodLevel(20);
                     player.setSaturation(20);
+
+                    if (!this.plugin.isPlayerBypassing(player.getUniqueId()) && !player.getInventory().isEmpty()) {
+                        player.getInventory().clear();
+                    }
 
                     if (this.mapTimer >= 4) {
                         for (int i = 0; i < 100; i++) {
@@ -162,7 +170,11 @@ public class Game implements GamePart {
                     this.setMapScore(this.selectedMap);
 
                     for (Player player : this.plugin.getServer().getOnlinePlayers()) {
-                        int team = this.playerTeams.get(player.getUniqueId());
+                        Integer team = this.playerTeams.get(player.getUniqueId());
+
+                        if (team == null) {
+                            team = 0;
+                        }
 
                         Score playerState = scoreboard.getOrCreatePlayerScore(player.getName(), playerStateObjective);
                         playerState.setScore(ACM2PlayerState.getPlayerScore(ACM2GameState.LOBBY, this.gamemode, team));
