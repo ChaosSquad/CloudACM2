@@ -14,6 +14,7 @@ import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.player.PlayerJoinEvent;
 
 public class EventListener implements Listener {
     private final CloudACM2 plugin;
@@ -192,6 +193,17 @@ public class EventListener implements Listener {
         }
 
         event.setCancelled(true);
+
+    }
+
+    @EventHandler
+    public void onPlayerJoin(PlayerJoinEvent event) {
+
+        if (this.plugin.getGame() instanceof Lobby) {
+
+            event.getPlayer().teleport(((Lobby) this.plugin.getGame()).getLobbySpawn());
+
+        }
 
     }
 }

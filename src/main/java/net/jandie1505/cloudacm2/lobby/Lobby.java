@@ -381,4 +381,8 @@ public class Lobby implements GamePart {
 
         return item;
     }
+
+    public Location getLobbySpawn() {
+        return this.lobbySpawn.clone();
+    }
 }

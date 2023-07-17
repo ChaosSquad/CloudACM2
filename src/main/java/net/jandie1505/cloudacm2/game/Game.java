@@ -9,6 +9,7 @@ import net.jandie1505.cloudacm2.map.ACM2PlayerState;
 import net.minecraft.server.ServerScoreboard;
 import net.minecraft.world.scores.Objective;
 import net.minecraft.world.scores.Score;
+import org.bukkit.GameMode;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -92,6 +93,25 @@ public class Game implements GamePart {
 
                 if (playerBypass.getScore() != 0) {
                     playerBypass.setScore(0);
+                }
+
+                Score playerStateScore = scoreboard.getOrCreatePlayerScore(player.getName(), playerStateObjective);
+                int playerState = playerStateScore.getScore();
+
+                boolean isIngame = false;
+                for (int i = 0; i < 4; i++) {
+
+                    if (playerState != ACM2PlayerState.getPlayerScore(ACM2GameState.GAME, this.gamemode, i)) {
+                        isIngame = true;
+                        break;
+                    }
+
+                }
+
+                if (isIngame && player.getGameMode() != GameMode.ADVENTURE) {
+                    player.setGameMode(GameMode.ADVENTURE);
+                } else if (!isIngame && player.getGameMode() != GameMode.SPECTATOR) {
+                    player.setGameMode(GameMode.SPECTATOR);
                 }
 
             }
