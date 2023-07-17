@@ -414,7 +414,7 @@ public class ACM2Command implements CommandExecutor, TabCompleter {
                         sender.sendMessage("§7Vote: ---");
                     }
                 }
-                case "team" -> sender.sendMessage("§cTeams are currently not supported");
+                case "team" -> sender.sendMessage("§7Team: " + playerData.getTeam());
                 default -> sender.sendMessage("§cValue not found");
             }
 
@@ -470,7 +470,17 @@ public class ACM2Command implements CommandExecutor, TabCompleter {
 
                     }
                 }
-                case "team" -> sender.sendMessage("§cTeams are currently not supported");
+                case "team" -> {
+
+                    try {
+                        playerData.setTeam(Integer.parseInt(args[4]));
+                        sender.sendMessage("§aTeam set");
+                    } catch (IllegalArgumentException e) {
+                        sender.sendMessage("§cPlease specify a valid int value");
+                        return;
+                    }
+
+                }
                 default -> sender.sendMessage("§cValue not found");
             }
 

@@ -311,6 +311,26 @@ public class Lobby implements GamePart {
             return null;
         }
 
+        for (UUID playerId : this.getPlayers().keySet()) {
+            LobbyPlayerData lobbyPlayerData = this.players.get(playerId);
+
+            if (lobbyPlayerData.getTeam() > 0) {
+                continue;
+            }
+
+            int countOne = this.countTeamPlayers(1);
+            int countTwo = this.countTeamPlayers(2);
+
+            if (countOne < countTwo) {
+                lobbyPlayerData.setTeam(countOne);
+            } else if (countTwo < countOne) {
+                lobbyPlayerData.setTeam(countTwo);
+            } else {
+                lobbyPlayerData.setTeam(new Random().nextInt(2) + 1);
+            }
+
+        }
+
         return new Game(
                 this.plugin,
                 this.gamemode,
@@ -384,5 +404,21 @@ public class Lobby implements GamePart {
 
     public Location getLobbySpawn() {
         return this.lobbySpawn.clone();
+    }
+
+    public int countTeamPlayers(int teamScore) {
+
+        int count = 0;
+
+        for (UUID playerId : this.getPlayers().keySet()) {
+            LobbyPlayerData lobbyPlayerData = this.players.get(playerId);
+
+            if (lobbyPlayerData.getTeam() == teamScore) {
+                count++;
+            }
+
+        }
+
+        return count;
     }
 }
