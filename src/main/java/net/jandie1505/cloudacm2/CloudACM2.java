@@ -5,16 +5,13 @@ import net.jandie1505.cloudacm2.config.DefaultConfigValues;
 import net.jandie1505.cloudacm2.game.Game;
 import net.jandie1505.cloudacm2.lobby.Lobby;
 import net.jandie1505.configmanager.ConfigManager;
-import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.dedicated.DedicatedServer;
 import net.minecraft.server.packs.repository.Pack;
 import net.minecraft.server.packs.repository.PackRepository;
-import org.bukkit.NamespacedKey;
 import org.bukkit.OfflinePlayer;
-import org.bukkit.craftbukkit.v1_19_R3.CraftServer;
+import org.bukkit.craftbukkit.v1_20_R1.CraftServer;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.packs.DataPack;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.ArrayList;
