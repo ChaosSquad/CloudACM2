@@ -1,5 +1,6 @@
 package net.jandie1505.cloudacm2;
 
+import de.myzelyam.api.vanish.VanishAPI;
 import net.jandie1505.cloudacm2.commands.ACM2Command;
 import net.jandie1505.cloudacm2.config.DefaultConfigValues;
 import net.jandie1505.cloudacm2.game.Game;
@@ -13,6 +14,7 @@ import org.bukkit.craftbukkit.v1_20_R1.CraftServer;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -28,6 +30,8 @@ public class CloudACM2 extends JavaPlugin {
     private boolean nextStatus;
     private boolean datapackStatus;
     private String datapackName;
+    private boolean cloudSystemMode;
+    private boolean svLoaded;
 
     @Override
     public void onEnable() {
@@ -39,11 +43,32 @@ public class CloudACM2 extends JavaPlugin {
         this.nextStatus = false;
         this.datapackStatus = false;
         this.datapackName = "file/" + this.configManager.getConfig().optString("datapack", "data_pack");
+        this.cloudSystemMode = this.configManager.getConfig().optJSONObject("cloudSystemMode", new JSONObject()).optBoolean("enable", false);
+
+        // supervanish/premiumvanish integration
+
+        if (this.configManager.getConfig().optJSONObject("integrations", new JSONObject()).optBoolean("supervanish-premiumvanish")) {
+            try {
+                Class.forName("de.myzelyam.api.vanish.VanishAPI");
+                this.svLoaded = true;
+                this.getLogger().info("SuperVanish/PremiumVanish integration enabled (auto-bypass when vanished)");
+            } catch (ClassNotFoundException ignored) {
+                this.svLoaded = false;
+            }
+        } else {
+            this.svLoaded = false;
+        }
+
+        // commands
 
         this.getCommand("cloudacm2").setExecutor(new ACM2Command(this));
         this.getCommand("cloudacm2").setTabCompleter(new ACM2Command(this));
 
+        // event listener
+
         this.getServer().getPluginManager().registerEvents(new EventListener(this), this);
+
+        // NMS datapack
 
         PackRepository packRepository = this.getNMS().getPackRepository();
 
@@ -52,6 +77,8 @@ public class CloudACM2 extends JavaPlugin {
             this.getServer().getPluginManager().disablePlugin(this);
             return;
         }
+
+        // datapack repeating task
 
         this.getServer().getScheduler().scheduleSyncRepeatingTask(this, () -> {
 
@@ -82,6 +109,8 @@ public class CloudACM2 extends JavaPlugin {
             }
 
         }, 0, 1);
+
+        // game task
 
         this.getServer().getScheduler().scheduleSyncRepeatingTask(this, () -> {
 
@@ -137,6 +166,11 @@ public class CloudACM2 extends JavaPlugin {
 
         }, 0, 10);
 
+        if (this.isCloudSystemMode()) {
+            this.getLogger().info("Cloud System Mode enabled (autostart game + switch to ingame + shutdown on end)");
+            this.startGame();
+        }
+
     }
 
     public void onDisable() {
@@ -173,7 +207,24 @@ public class CloudACM2 extends JavaPlugin {
     }
 
     public boolean isPlayerBypassing(UUID playerId) {
-        return this.bypassingPlayers.contains(playerId);
+
+        if (this.getBypassingPlayers().contains(playerId)) {
+            return true;
+        }
+
+        if (this.getConfigManager().getConfig().optJSONObject("integrations", new JSONObject()).optBoolean("supervanish-premiumvanish", false) && this.svLoaded) {
+
+            Player player = this.getServer().getPlayer(playerId);
+
+            if (player == null) {
+                return false;
+            }
+
+            return VanishAPI.isInvisible(player);
+
+        }
+
+        return false;
     }
 
     public void addBypassingPlayer(UUID playerId) {
@@ -222,6 +273,10 @@ public class CloudACM2 extends JavaPlugin {
                 return null;
             }
         }
+    }
+
+    public boolean isCloudSystemMode() {
+        return this.cloudSystemMode;
     }
 
     public DedicatedServer getNMS() {

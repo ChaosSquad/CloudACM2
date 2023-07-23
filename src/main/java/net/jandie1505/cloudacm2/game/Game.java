@@ -1,5 +1,7 @@
 package net.jandie1505.cloudacm2.game;
 
+import eu.cloudnetservice.driver.inject.InjectionLayer;
+import eu.cloudnetservice.modules.bridge.BridgeServiceHelper;
 import net.jandie1505.cloudacm2.CloudACM2;
 import net.jandie1505.cloudacm2.GamePart;
 import net.jandie1505.cloudacm2.lobby.LobbyPlayerData;
@@ -15,6 +17,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
+import org.json.JSONObject;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -38,6 +41,8 @@ public class Game implements GamePart {
         this.mapState = 0;
         this.mapTimer = 0;
 
+        // add players
+
         for (UUID playerId : players.keySet()) {
             LobbyPlayerData lobbyPlayerData = players.get(playerId);
             Player player = this.plugin.getServer().getPlayer(playerId);
@@ -52,6 +57,48 @@ public class Game implements GamePart {
 
             this.playerTeams.put(playerId, lobbyPlayerData.getTeam());
         }
+
+        // CLOUDSYSTEM MODE
+
+        if (this.plugin.isCloudSystemMode()) {
+
+            // Custom command
+
+            String customCommand = this.plugin.getConfigManager().getConfig().optJSONObject("cloudSystemMode", new JSONObject()).optString("switchToIngameCommand", "");
+
+            if (!customCommand.equalsIgnoreCase("")) {
+                this.plugin.getServer().dispatchCommand(this.plugin.getServer().getConsoleSender(), customCommand);
+            }
+
+            // CloudNet ingame state
+
+            if (this.plugin.getConfigManager().getConfig().optJSONObject("integrations", new JSONObject()).optBoolean("cloudnet", false)) {
+
+                try {
+
+                    try {
+                        Class.forName("eu.cloudnetservice.driver.inject.InjectionLayer");
+                        Class.forName("eu.cloudnetservice.modules.bridge.BridgeServiceHelper");
+
+                        BridgeServiceHelper bridgeServiceHelper = InjectionLayer.ext().instance(BridgeServiceHelper.class);
+
+                        if (bridgeServiceHelper != null) {
+                            bridgeServiceHelper.changeToIngame();
+                            this.plugin.getLogger().info("Changed server to ingame state (CloudNet)");
+                        }
+                    } catch (ClassNotFoundException ignored) {
+                        // ignored (cloudnet not installed)
+                    }
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+
+            }
+
+        }
+
+        // enable datapack
 
         this.plugin.setDatapackStatus(true);
     }
@@ -143,7 +190,7 @@ public class Game implements GamePart {
 
                     if (this.mapTimer >= 4) {
                         for (int i = 0; i < 100; i++) {
-                            player.sendMessage("");
+                            player.sendMessage(" ");
                         }
                         player.sendMessage("§6From this point on, the map runs completely without plugins");
                     }
@@ -241,6 +288,12 @@ public class Game implements GamePart {
 
     @Override
     public GamePart getNextStatus() {
+
+        if (this.plugin.isCloudSystemMode()) {
+            this.plugin.getLogger().info("Cloudsystem mode enabled: Shutting down server");
+            this.plugin.getServer().shutdown();
+        }
+
         return null;
     }
 

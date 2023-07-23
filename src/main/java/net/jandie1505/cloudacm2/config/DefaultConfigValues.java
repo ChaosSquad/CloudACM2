@@ -38,6 +38,24 @@ public class DefaultConfigValues {
 
         config.put("spawn", lobbySpawn);
 
+        // Cloudsystem
+
+        JSONObject cloudSystemConfig = new JSONObject();
+
+        cloudSystemConfig.put("enable", false);
+        cloudSystemConfig.put("switchToIngameCommand", "");
+
+        config.put("cloudSystemMode", cloudSystemConfig);
+
+        // integrations
+
+        JSONObject integrationsConfig = new JSONObject();
+
+        integrationsConfig.put("cloudnet", true);
+        integrationsConfig.put("supervanish-premiumvanish", true);
+
+        config.put("integrations", integrationsConfig);
+
         // return
 
         return config;
