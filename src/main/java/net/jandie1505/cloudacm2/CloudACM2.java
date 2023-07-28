@@ -279,6 +279,10 @@ public class CloudACM2 extends JavaPlugin {
         return this.cloudSystemMode;
     }
 
+    public void setCloudSystemMode(boolean cloudSystemMode) {
+        this.cloudSystemMode = cloudSystemMode;
+    }
+
     public DedicatedServer getNMS() {
         return ((CraftServer) this.getServer()).getServer();
     }

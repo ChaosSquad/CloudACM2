@@ -36,6 +36,7 @@ public class ACM2Command implements CommandExecutor, TabCompleter {
             case "forcemap" -> this.forcemapSubcommand(sender, args);
             case "votemap" -> this.votemapCommand(sender, args);
             case "player", "players" -> this.playerSubcommand(sender, args);
+            case "cloudsystemmode" -> this.cloudsystemModeSubcommand(sender, args);
             default -> sender.sendMessage("§cUnknown subcommand");
         }
 
@@ -485,6 +486,27 @@ public class ACM2Command implements CommandExecutor, TabCompleter {
             }
 
             return;
+        }
+
+    }
+
+    public void cloudsystemModeSubcommand(CommandSender sender, String[] args) {
+
+        if (!this.hasAdminPermission(sender)) {
+            sender.sendMessage("§cNo permission");
+            return;
+        }
+
+        if (args.length > 1 && args[1].equalsIgnoreCase("disable")) {
+
+            this.plugin.setCloudSystemMode(false);
+            sender.sendMessage("§aCloudSystem mode disabled. To re-enable it, restart the server.");
+
+        } else {
+
+            sender.sendMessage("§7CloudSystem mode: " + this.plugin.isCloudSystemMode());
+            sender.sendMessage("§7To disable it, use /bedwars cloudsystemmode disable (restart for re-enabling required).");
+
         }
 
     }
