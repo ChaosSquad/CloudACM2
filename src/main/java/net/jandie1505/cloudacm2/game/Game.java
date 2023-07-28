@@ -224,7 +224,6 @@ public class Game implements GamePart {
                     }
 
                     gameMode.setScore(this.gamemode);
-                    this.setMapScore(this.selectedMap);
                     gameState.setScore(ACM2GameState.START_LOBBY);
                     this.mapState++;
                 }
@@ -262,7 +261,7 @@ public class Game implements GamePart {
                 case 4 -> this.mapState++;
                 case 5 -> {
                     if (gameState.getScore() != ACM2GameState.NONE && (gameState.getScore() < ACM2GameState.GAME || gameState.getScore() > ACM2GameState.RESET)) {
-                        this.plugin.getLogger().warning("Wrong game state [4]: state has to be 4, 5 or 6 but is " + gameState.getScore());
+                        this.plugin.getLogger().warning("Wrong game state [5]: state has to be 4, 5 or 6 but is " + gameState.getScore());
                         return false;
                     }
 

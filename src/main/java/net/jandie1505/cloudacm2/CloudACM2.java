@@ -164,6 +164,11 @@ public class CloudACM2 extends JavaPlugin {
                 this.datapackStatus = false;
             }
 
+            if (this.isCloudSystemMode() && this.game == null) {
+                this.getLogger().info("Shutting down server because cloud system mode is enabled and no game is running.");
+                this.getServer().shutdown();
+            }
+
         }, 0, 10);
 
         if (this.isCloudSystemMode()) {
