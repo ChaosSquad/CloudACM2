@@ -148,7 +148,7 @@ public class CloudACM2 extends JavaPlugin {
                 this.getLogger().warning("Exception in game: " + e + "\nMessage: " + e.getMessage() + "\nStacktrace: " + Arrays.toString(e.getStackTrace()) + "--- END ---");
             }
 
-            if (this.game != null) {
+            if (this.game instanceof Game) {
 
                 if (this.gameTimer >= 7200) {
                     this.gameTimer = 0;
