@@ -117,13 +117,13 @@ public class Game implements GamePart {
 
         ServerScoreboard scoreboard = this.plugin.getNMS().getScoreboard();
 
-        Objective systemObjective = scoreboard.getOrCreateObjective("system");
+        Objective systemObjective = scoreboard.getObjective("system");
         Score gameMode = scoreboard.getOrCreatePlayerScore("#mode", systemObjective);
         Score gameState = scoreboard.getOrCreatePlayerScore("#state", systemObjective);
 
-        Objective playerStateObjective = scoreboard.getOrCreateObjective("pms.playerstate");
+        Objective playerStateObjective = scoreboard.getObjective("pms.playerstate");
 
-        Objective playerBypassObjective = scoreboard.getOrCreateObjective("pms.bypass");
+        Objective playerBypassObjective = scoreboard.getObjective("pms.bypass");
 
         // Check players
 
@@ -301,17 +301,17 @@ public class Game implements GamePart {
 
         switch (this.gamemode) {
             case ACM2GameMode.RUSH -> {
-                Objective settingsObjective = scoreboard.getOrCreateObjective("rush.settings");
+                Objective settingsObjective = scoreboard.getObjective("rush.settings");
                 Score gamezoneScore = scoreboard.getOrCreatePlayerScore("#gamezone", settingsObjective);
                 gamezoneScore.setScore(this.selectedMap);
             }
             case ACM2GameMode.TDM -> {
-                Objective settingsObjective = scoreboard.getOrCreateObjective("tdm.settings");
+                Objective settingsObjective = scoreboard.getObjective("tdm.settings");
                 Score gamezoneScore = scoreboard.getOrCreatePlayerScore("#zone", settingsObjective);
                 gamezoneScore.setScore(this.selectedMap);
             }
             case ACM2GameMode.CTF -> {
-                Objective settingsObjective = scoreboard.getOrCreateObjective("ctf.settings");
+                Objective settingsObjective = scoreboard.getObjective("ctf.settings");
                 Score gamezoneScore = scoreboard.getOrCreatePlayerScore("#zone", settingsObjective);
                 gamezoneScore.setScore(this.selectedMap);
             }
