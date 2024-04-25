@@ -10,7 +10,8 @@ import net.jandie1505.cloudacm2.map.ACM2GameState;
 import net.jandie1505.cloudacm2.map.ACM2PlayerState;
 import net.minecraft.server.ServerScoreboard;
 import net.minecraft.world.scores.Objective;
-import net.minecraft.world.scores.Score;
+import net.minecraft.world.scores.ScoreAccess;
+import net.minecraft.world.scores.ScoreHolder;
 import org.bukkit.GameMode;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -118,8 +119,8 @@ public class Game implements GamePart {
         ServerScoreboard scoreboard = this.plugin.getNMS().getScoreboard();
 
         Objective systemObjective = scoreboard.getObjective("system");
-        Score gameMode = scoreboard.getOrCreatePlayerScore("#mode", systemObjective);
-        Score gameState = scoreboard.getOrCreatePlayerScore("#state", systemObjective);
+        ScoreAccess gameMode = scoreboard.getOrCreatePlayerScore(ScoreHolder.forNameOnly("#mode"), systemObjective);
+        ScoreAccess gameState = scoreboard.getOrCreatePlayerScore(ScoreHolder.forNameOnly("#state"), systemObjective);
 
         Objective playerStateObjective = scoreboard.getObjective("pms.playerstate");
 
@@ -128,22 +129,22 @@ public class Game implements GamePart {
         // Check players
 
         for (Player player : this.plugin.getServer().getOnlinePlayers()) {
-            Score playerBypass = scoreboard.getOrCreatePlayerScore(player.getName(), playerBypassObjective);
+            ScoreAccess playerBypass = scoreboard.getOrCreatePlayerScore(ScoreHolder.forNameOnly(player.getName()), playerBypassObjective);
 
             if (this.plugin.isPlayerBypassing(player.getUniqueId())) {
 
-                if (playerBypass.getScore() != 1) {
-                    playerBypass.setScore(1);
+                if (playerBypass.get() != 1) {
+                    playerBypass.set(1);
                 }
 
             } else {
 
-                if (playerBypass.getScore() != 0) {
-                    playerBypass.setScore(0);
+                if (playerBypass.get() != 0) {
+                    playerBypass.set(0);
                 }
 
-                Score playerStateScore = scoreboard.getOrCreatePlayerScore(player.getName(), playerStateObjective);
-                int playerState = playerStateScore.getScore();
+                ScoreAccess playerStateScore = scoreboard.getOrCreatePlayerScore(ScoreHolder.forNameOnly(player.getName()), playerStateObjective);
+                int playerState = playerStateScore.get();
 
                 boolean isIngame = false;
                 for (int i = 0; i < 4; i++) {
@@ -213,23 +214,23 @@ public class Game implements GamePart {
 
             switch (this.mapState) {
                 case 0 -> {
-                    gameMode.setScore(ACM2GameMode.NONE);
-                    gameState.setScore(ACM2GameState.RESET);
+                    gameMode.set(ACM2GameMode.NONE);
+                    gameState.set(ACM2GameState.RESET);
                     this.mapState++;
                 }
                 case 1 -> {
-                    if (gameState.getScore() != ACM2GameState.NONE) {
-                        this.plugin.getLogger().warning("Wrong game state [1]: state has to be 0 but is " + gameState.getScore());
+                    if (gameState.get() != ACM2GameState.NONE) {
+                        this.plugin.getLogger().warning("Wrong game state [1]: state has to be 0 but is " + gameState.get());
                         return false;
                     }
 
-                    gameMode.setScore(this.gamemode);
-                    gameState.setScore(ACM2GameState.START_LOBBY);
+                    gameMode.set(this.gamemode);
+                    gameState.set(ACM2GameState.START_LOBBY);
                     this.mapState++;
                 }
                 case 2 -> {
-                    if (gameState.getScore() != ACM2GameState.LOBBY) {
-                        this.plugin.getLogger().warning("Wrong game state [2]: state has to be 2 but is " + gameState.getScore());
+                    if (gameState.get() != ACM2GameState.LOBBY) {
+                        this.plugin.getLogger().warning("Wrong game state [2]: state has to be 2 but is " + gameState.get());
                         return false;
                     }
 
@@ -242,30 +243,30 @@ public class Game implements GamePart {
                             team = 0;
                         }
 
-                        Score playerState = scoreboard.getOrCreatePlayerScore(player.getName(), playerStateObjective);
-                        playerState.setScore(ACM2PlayerState.getPlayerScore(ACM2GameState.LOBBY, this.gamemode, team));
+                        ScoreAccess playerState = scoreboard.getOrCreatePlayerScore(ScoreHolder.forNameOnly(player.getName()), playerStateObjective);
+                        playerState.set(ACM2PlayerState.getPlayerScore(ACM2GameState.LOBBY, this.gamemode, team));
                     }
 
                     this.mapState++;
                 }
                 case 3 -> {
-                    if (gameState.getScore() != ACM2GameState.LOBBY) {
-                        this.plugin.getLogger().warning("Wrong game state [3]: state has to be 2 but is " + gameState.getScore());
+                    if (gameState.get() != ACM2GameState.LOBBY) {
+                        this.plugin.getLogger().warning("Wrong game state [3]: state has to be 2 but is " + gameState.get());
                         return false;
                     }
 
-                    gameState.setScore(ACM2GameState.START_GAME);
+                    gameState.set(ACM2GameState.START_GAME);
 
                     this.mapState++;
                 }
                 case 4 -> this.mapState++;
                 case 5 -> {
-                    if (gameState.getScore() != ACM2GameState.NONE && (gameState.getScore() < ACM2GameState.GAME || gameState.getScore() > ACM2GameState.RESET)) {
-                        this.plugin.getLogger().warning("Wrong game state [5]: state has to be 4, 5 or 6 but is " + gameState.getScore());
+                    if (gameState.get() != ACM2GameState.NONE && (gameState.get() < ACM2GameState.GAME || gameState.get() > ACM2GameState.RESET)) {
+                        this.plugin.getLogger().warning("Wrong game state [5]: state has to be 4, 5 or 6 but is " + gameState.get());
                         return false;
                     }
 
-                    if (gameState.getScore() == ACM2GameState.NONE) {
+                    if (gameState.get() == ACM2GameState.NONE) {
                         this.plugin.getLogger().info("Game end. Proceeding to endlobby...");
                         this.plugin.setDatapackStatus(false);
                         this.plugin.nextStatus();
@@ -302,18 +303,18 @@ public class Game implements GamePart {
         switch (this.gamemode) {
             case ACM2GameMode.RUSH -> {
                 Objective settingsObjective = scoreboard.getObjective("rush.settings");
-                Score gamezoneScore = scoreboard.getOrCreatePlayerScore("#gamezone", settingsObjective);
-                gamezoneScore.setScore(this.selectedMap);
+                ScoreAccess gamezoneScore = scoreboard.getOrCreatePlayerScore(ScoreHolder.forNameOnly("#gamezone"), settingsObjective);
+                gamezoneScore.set(this.selectedMap);
             }
             case ACM2GameMode.TDM -> {
                 Objective settingsObjective = scoreboard.getObjective("tdm.settings");
-                Score gamezoneScore = scoreboard.getOrCreatePlayerScore("#zone", settingsObjective);
-                gamezoneScore.setScore(this.selectedMap);
+                ScoreAccess gamezoneScore = scoreboard.getOrCreatePlayerScore(ScoreHolder.forNameOnly("#zone"), settingsObjective);
+                gamezoneScore.set(this.selectedMap);
             }
             case ACM2GameMode.CTF -> {
                 Objective settingsObjective = scoreboard.getObjective("ctf.settings");
-                Score gamezoneScore = scoreboard.getOrCreatePlayerScore("#zone", settingsObjective);
-                gamezoneScore.setScore(this.selectedMap);
+                ScoreAccess gamezoneScore = scoreboard.getOrCreatePlayerScore(ScoreHolder.forNameOnly("#zone"), settingsObjective);
+                gamezoneScore.set(this.selectedMap);
             }
         }
 
