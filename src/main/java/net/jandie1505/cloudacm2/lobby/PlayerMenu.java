@@ -95,8 +95,8 @@ public class PlayerMenu implements InventoryHolder {
         meta.setLore(lore);
 
         if (selected) {
-            meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
-            meta.addEnchant(Enchantment.LUCK, 1, true);
+            meta.addItemFlags(ItemFlag.values());
+            meta.addEnchant(Enchantment.AQUA_AFFINITY, 1, true);
         }
 
         item.setItemMeta(meta);
